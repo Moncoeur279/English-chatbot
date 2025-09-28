@@ -1,0 +1,434 @@
+.profile-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.profile-card {
+    width: 100%;
+    max-width: 800px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    color: white;
+}
+
+.back-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateX(-2px);
+}
+
+.profile-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* Not Logged In State */
+.not-logged-in {
+    padding: 60px 24px;
+    text-align: center;
+    color: #64748b;
+}
+
+.not-logged-in-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.not-logged-in h3 {
+    color: #1e293b;
+    margin-bottom: 12px;
+    font-size: 24px;
+}
+
+.not-logged-in p {
+    margin-bottom: 32px;
+    font-size: 16px;
+}
+
+.back-to-chat-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.back-to-chat-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* User Info Section */
+.user-info-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 32px 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.user-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 32px;
+    font-weight: 600;
+}
+
+.user-details h3 {
+    color: #1e293b;
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.user-status {
+    color: #3b82f6;
+    font-weight: 500;
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+
+.join-date {
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Stats Overview */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    padding: 24px;
+    background: #f8fafc;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 600;
+    color: #3b82f6;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Progress Section */
+.progress-section {
+    padding: 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.progress-section h4 {
+    color: #1e293b;
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.progress-item {
+    margin-bottom: 20px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #475569;
+    font-weight: 500;
+}
+
+.progress-bar {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.vocabulary-progress {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.communication-progress {
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+/* Achievements Section */
+.achievements-section {
+    padding: 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.achievements-section h4 {
+    color: #1e293b;
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.achievement-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.achievement-card.earned {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.achievement-card.locked {
+    opacity: 0.6;
+    background: #f8fafc;
+}
+
+.achievement-card:hover {
+    transform: translateY(-2px);
+}
+
+.achievement-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+}
+
+.achievement-info {
+    flex: 1;
+}
+
+.achievement-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.achievement-description {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.earned-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    background: #10b981;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Learning Streak */
+.streak-section {
+    padding: 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.streak-section h4 {
+    color: #1e293b;
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.streak-display {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.streak-number {
+    font-size: 48px;
+    font-weight: 600;
+    color: #f59e0b;
+    margin-bottom: 8px;
+}
+
+.streak-label {
+    color: #64748b;
+    font-size: 16px;
+}
+
+.streak-calendar {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.streak-day {
+    text-align: center;
+}
+
+.day-name {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.day-indicator {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.streak-day.active .day-indicator {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* Recent Activity */
+.activity-section {
+    padding: 24px;
+}
+
+.activity-section h4 {
+    color: #1e293b;
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    transition: background 0.2s ease;
+}
+
+.activity-item:hover {
+    background: #f1f5f9;
+}
+
+.activity-icon {
+    font-size: 24px;
+    width: 48px;
+    height: 48px;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.activity-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.activity-text span:first-child {
+    color: #1e293b;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.activity-time {
+    color: #64748b;
+    font-size: 12px;
+}
