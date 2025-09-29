@@ -11,10 +11,7 @@ export default function App() {
   return (
     <div className="app">
       <div className="layout">
-        {/* Cột trái: sidebar full height */}
         <Sidebar />
-
-        {/* Cột phải: header trên + nội dung dưới */}
         <div className="main">
           <ChatHeader />
           <div className="main-content">

@@ -22,7 +22,7 @@ body,
 
 /* App Container */
 .app {
-  min-height: 90vh;
+  min-height: 100vh;
   background: linear-gradient(135deg, #64748b 0%, #3b82f6 50%, #6b7280 100%);
 }
 
@@ -45,9 +45,7 @@ body,
   display: flex;
   flex-direction: column;
   height: 100vh;
-  /* để header + nội dung fit toàn màn */
   min-height: 0;
-  /* quan trọng để vùng con được scroll */
 }
 
 .main-content {
@@ -55,7 +53,8 @@ body,
   display: flex;
   flex-direction: column;
   min-height: 0;
-  /* cho phép con bên trong overflow */
+  overflow: auto;
+  background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%);
 }
 
 .chat-main {
