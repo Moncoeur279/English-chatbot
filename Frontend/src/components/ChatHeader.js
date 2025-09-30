@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import "../styles/ChatHeader.css";
 import { AccountMenu } from "./AccountMenu";
 
-export function ChatHeader({ title = "AI Assistant", subtitle = "Always here to help" }) {
+export function ChatHeader({ title = "TalkMate", subtitle = "Always here to help your english" }) {
   const navigate = useNavigate();
 
   return (
