@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import "../styles/ChatHeader.css";
+import { FaBook } from 'react-icons/fa';
 import { AccountMenu } from "./AccountMenu";
 
 export function ChatHeader({ title = "TalkMate", subtitle = "Always here to help your english" }) {
@@ -14,7 +15,8 @@ export function ChatHeader({ title = "TalkMate", subtitle = "Always here to help
 
       <div className="header-actions">
         <button className="action-button dictionary-btn" onClick={() => navigate("/dictionary")}>
-          📚 Dictionary
+          <FaBook />
+          Dictionary
         </button>
         <AccountMenu />
       </div>

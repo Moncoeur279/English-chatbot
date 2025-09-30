@@ -2,9 +2,11 @@ const express = require("express");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 const path = require("path");
-const corsConfig = require("./middleware/corsConfig");
+const corsConfig = require("./config/corsConfig");
 const { sequelize } = require("./config/dbConfig");
 const { connectDB } = require("./config/dbConfig");
+
+const dictRoutes = require('./routes/dictionaryRoutes');
 
 require("./models");
 
@@ -18,12 +20,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("common"));
 
-/*sequelize.sync({ force: false }).then(() => {
-   console.log("Database & tables created!");
+sequelize.sync({ force: false }).then(() => {
+    console.log("Database & tables created!");
 });
-*/
 
 // ROUTE
+app.use("/api/dict", dictRoutes);
 
 
 const startServer = async () => {

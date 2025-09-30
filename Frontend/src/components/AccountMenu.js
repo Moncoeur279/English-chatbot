@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaUser } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
 import "../styles/AccountMenu.css";
 
 export function AccountMenu() {
@@ -41,10 +43,12 @@ export function AccountMenu() {
       <>
         <div className="auth-buttons">
           <button className="auth-button login-btn" onClick={() => setShowLoginModal(true)}>
-            👤 Login
+            < FaUser />
+            Login
           </button>
           <button className="auth-button register-btn" onClick={() => setShowRegisterModal(true)}>
-            ➕ Register
+            < FaPlus />
+            Register
           </button>
         </div>
 
