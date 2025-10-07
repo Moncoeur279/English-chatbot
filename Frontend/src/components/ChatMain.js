@@ -1,210 +1,194 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "../styles/ChatMessage.css";
 import "../styles/ChatInput.css";
 
-// --- tiny demo checker: bạn sẽ thay bằng API thật sau ---
-function grammarCheck(text) {
-  // ví dụ: "how is you" -> gợi ý "are" cho từ "is"
-  const idx = text.toLowerCase().indexOf("how is you");
-  if (idx !== -1) {
-    const start = text.toLowerCase().indexOf(" is ", idx) + 1; // bắt đầu tại "is"
-    return [
-      {
-        id: "c1",
-        label: "Correct subject-verb agreement",
-        error: "is",
-        suggestion: "are",
-        reason: "Plural subject → use “are”.",
-        start,
-        end: start + 2,
-      },
-    ];
-  }
-  return [];
-}
-
 export default function ChatMain() {
   const { id } = useParams();
   const [text, setText] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: `Hello! I'm your AI assistant. 💙`,
-      isUser: false,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      corrections: [],
-    },
-  ]);
-
+  const [isTyping, setIsTyping] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [popover, setPopover] = useState(null);
   const listRef = useRef(null);
 
-  // popover state (cố định khi click)
-  const [activePop, setActivePop] = useState(
-    /** { msgId, corrId, rect:{top,left,bottom,right}, data } | null */
-    null
-  );
-
+  // Tự động cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
-    listRef.current?.scrollTo({
-      top: listRef.current.scrollHeight,
-      behavior: "smooth",
-    });
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, id]);
 
-  // click ngoài để đóng
-  useEffect(() => {
-    function onDocClick(e) {
-      if (!activePop) return;
-      const pop = document.getElementById("grammar-popover");
-      if (pop && !pop.contains(e.target)) setActivePop(null);
-    }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [activePop]);
+  // ====================== GỬI TIN NHẮN ======================
+  const handleSend = async (e) => {
+    e.preventDefault();
+    const userText = text.trim();
+    if (!userText) return;
 
-  const handleSend = (e) => {
-    e?.preventDefault();
-    if (!text.trim()) return;
-    const now = new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const msgId = Date.now();
 
-    const corrections = grammarCheck(text);
-
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), text, isUser: true, timestamp: now, corrections },
-    ]);
+    // Thêm user message
+    const newMsg = {
+      id: msgId,
+      text: userText,
+      isUser: true,
+      timestamp: now,
+      corrections: [],
+    };
+    setMessages((prev) => [...prev, newMsg]);
     setText("");
+    setIsTyping(true);
+
+    try {
+      // Gọi song song 2 API
+      const [chatRes, grammarRes] = await Promise.all([
+        fetch("http://localhost:3030/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: userText }),
+        }),
+        fetch("http://localhost:3030/api/grammar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: userText }),
+        }),
+      ]);
+
+      const chatData = await chatRes.json();
+      const grammarData = await grammarRes.json();
+
+      // Gắn lỗi ngữ pháp vào message user
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? {
+              ...m,
+              corrections:
+                grammarData.corrections?.map((c, i) => ({
+                  id: i + 1,
+                  original: c.original,
+                  suggestion: c.suggestion,
+                  reason: c.reason,
+                  label: c.label,
+                  applied: false,
+                })) || [],
+            }
+            : m
+        )
+      );
+
+      // Thêm phản hồi của AI
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: msgId + 1,
+          text: chatData.reply || "Okay!",
+          isUser: false,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+      ]);
+    } catch (err) {
+      console.error("Error contacting API:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: msgId + 1,
+          text: "Demo phản hồi của AI",
+          isUser: false,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
-  // apply 1 đề xuất → thay đoạn text và cập nhật các ranges còn lại
-  const applyCorrection = (msgId, corrId) => {
+  // ====================== ÁP DỤNG SỬA LỖI ======================
+  const applyCorrection = (msgId, corr) => {
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== msgId) return m;
-        const corr = m.corrections.find((c) => c.id === corrId);
-        if (!corr) return m;
 
-        const before = m.text.slice(0, corr.start);
-        const after = m.text.slice(corr.end);
-        const newText = before + corr.suggestion + after;
+        // Chỉ thay đúng từ sai đầu tiên tìm thấy trong câu
+        const regex = new RegExp(`\\b${escapeRegex(corr.original)}\\b`, "i");
+        const newText = m.text.replace(regex, corr.suggestion);
 
-        const delta = corr.suggestion.length - (corr.end - corr.start);
-        const newCorrs = m.corrections
-          .filter((c) => c.id !== corrId)
-          .map((c) => {
-            if (c.start >= corr.end) {
-              // đẩy các range phía sau
-              return { ...c, start: c.start + delta, end: c.end + delta };
-            }
-            return c;
-          });
+        const updatedCorrections = m.corrections.map((c) =>
+          c.id === corr.id ? { ...c, applied: true } : c
+        );
 
-        return { ...m, text: newText, corrections: newCorrs };
+        return { ...m, text: newText, corrections: updatedCorrections };
       })
     );
-    setActivePop(null);
+    setPopover(null);
   };
 
-  // render text + highlight
-  const renderWithHighlights = (m) => {
-    if (!m.corrections?.length) return m.text;
+  // ====================== POPOVER ======================
+  const handleWordClick = (e, msgId, corr) => {
+    const rect = e.target.getBoundingClientRect();
+    const popoverWidth = 260;
+    const popoverHeight = 140;
+    let x = rect.left;
+    let y = rect.bottom + window.scrollY;
 
-    const pieces = [];
-    let last = 0;
-    const sorted = [...m.corrections].sort((a, b) => a.start - b.start);
+    if (x + popoverWidth > window.innerWidth - 20)
+      x = window.innerWidth - popoverWidth - 20;
+    if (y + popoverHeight > window.innerHeight + window.scrollY)
+      y = rect.top + window.scrollY - popoverHeight - 10;
 
-    sorted.forEach((c, i) => {
-      if (last < c.start) pieces.push(<span key={`t-${i}`}>{m.text.slice(last, c.start)}</span>);
-
-      pieces.push(
-        <span
-          key={`c-${c.id}`}
-          className="grammar-error"
-          onClick={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            setActivePop({
-              msgId: m.id,
-              corrId: c.id,
-              rect,
-              data: c,
-            });
-          }}
-        >
-          {m.text.slice(c.start, c.end)}
-        </span>
-      );
-      last = c.end;
-    });
-
-    if (last < m.text.length) pieces.push(<span key="t-last">{m.text.slice(last)}</span>);
-    return pieces;
+    setPopover({ x, y, corr, msgId });
   };
 
+  // ====================== RENDER ======================
   return (
     <div className="chat-main">
-      <div className="messages-container">
-        <div ref={listRef} className="messages-list">
-          {messages.map((m) => (
-            <div key={m.id} className={`message ${m.isUser ? "user-message" : "ai-message"}`}>
-              <div className="message-avatar">
-                <span>{m.isUser ? "U" : "AI"}</span>
+      <div ref={listRef} className="messages-list">
+        {messages.map((m) => (
+          <div key={m.id} className={`message ${m.isUser ? "user-message" : "ai-message"}`}>
+            <div className="message-avatar"><span>{m.isUser ? "U" : "AI"}</span></div>
+            <div className="message-content">
+              <div className="message-bubble">
+                {m.isUser && m.corrections?.length > 0 ? (
+                  <div className="highlighted-text">
+                    {renderTextWithHighlights(m, handleWordClick)}
+                  </div>
+                ) : (
+                  <span>{m.text}</span>
+                )}
               </div>
-              <div className="message-content">
-                <div className="message-bubble">{m.isUser ? renderWithHighlights(m) : m.text}</div>
-                <div className="message-timestamp">{m.timestamp}</div>
-              </div>
+              <div className="message-timestamp">{m.timestamp}</div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+
+        {isTyping && (
+          <div className="message ai-message">
+            <div className="message-avatar"><span>AI</span></div>
+            <div className="message-content">
+              <div className="message-bubble">Typing…</div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* POPUP trắng giữ nguyên khi click */}
-      {activePop && (
-        <div
-          id="grammar-popover"
-          className="grammar-popover"
-          style={{
-            position: "fixed",
-            top: activePop.rect.bottom + 8,
-            left: Math.max(8, Math.min(activePop.rect.left, window.innerWidth - 320 - 8)),
-          }}
-        >
-          <div className="gp-header">{activePop.data.label}</div>
-          <div className="gp-suggestion">
-            <span className="gp-suggest-word">{activePop.data.suggestion}</span>
+      {/* Popover lỗi */}
+      {popover && (
+        <div className="grammar-popover" style={{ top: popover.y, left: popover.x }}>
+          <div className="popover-header">{popover.corr.label}</div>
+          <div className="popover-body">{popover.corr.reason}</div>
+          <div className="popover-suggest">
+            👉 <b>{popover.corr.suggestion}</b>
           </div>
-          {activePop.data.reason && <div className="gp-reason">{activePop.data.reason}</div>}
-          <div className="gp-actions">
-            <button className="gp-apply" onClick={() => applyCorrection(activePop.msgId, activePop.corrId)}>
-              Apply
-            </button>
-            <button
-              className="gp-dismiss"
-              onClick={() => {
-                // loại bỏ đề xuất này
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === activePop.msgId
-                      ? { ...m, corrections: m.corrections.filter((c) => c.id !== activePop.corrId) }
-                      : m
-                  )
-                );
-                setActivePop(null);
-              }}
-            >
-              Dismiss
-            </button>
-          </div>
+          <button onClick={() => applyCorrection(popover.msgId, popover.corr)}>Apply</button>
+          <button onClick={() => setPopover(null)}>Close</button>
         </div>
       )}
 
+      {/* Form nhập */}
       <form className="chat-input-form" onSubmit={handleSend}>
         <div className="input-container">
           <input
@@ -215,8 +199,16 @@ export default function ChatMain() {
             onChange={(e) => setText(e.target.value)}
           />
           <button className="send-btn" type="submit" disabled={!text.trim()}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="m22 2-7 20-4-9-9-4Z" />
               <path d="M22 2 11 13" />
             </svg>
@@ -225,4 +217,37 @@ export default function ChatMain() {
       </form>
     </div>
   );
+}
+
+// ====================== GẠCH CHÂN & CLICK ======================
+function renderTextWithHighlights(msg, onClick) {
+  let text = msg.text;
+
+  // Duyệt từng lỗi và chèn highlight vào text
+  msg.corrections.forEach((corr) => {
+    const regex = new RegExp(`(${escapeRegex(corr.original)})`, "gi");
+    text = text.replace(
+      regex,
+      `<span class="${corr.applied ? "word-fixed" : "word-error"
+      }" data-id="${corr.id}">$1</span>`
+    );
+  });
+
+  return (
+    <span
+      dangerouslySetInnerHTML={{ __html: text }}
+      onClick={(e) => {
+        const span = e.target.closest("span[data-id]");
+        if (!span) return;
+        const id = parseInt(span.getAttribute("data-id"));
+        const corr = msg.corrections.find((c) => c.id === id);
+        if (corr) onClick(e, msg.id, corr);
+      }}
+    />
+  );
+}
+
+// ====================== ESCAPE REGEX ======================
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

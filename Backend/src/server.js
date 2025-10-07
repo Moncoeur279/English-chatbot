@@ -1,12 +1,19 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
+const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
+const rateLimit = require("express-rate-limit");
 const path = require("path");
 const corsConfig = require("./config/corsConfig");
 const { sequelize } = require("./config/dbConfig");
 const { connectDB } = require("./config/dbConfig");
 
-const dictRoutes = require('./routes/dictionaryRoutes');
+const dictRoutes = require("./routes/dictionaryRoutes");
+const chatRoutes = require("./routes/chatRoutes");
+const authRoutes = require("./routes/auth.routes");
+const grammarRoutes = require("./routes/grammarRoutes");
+
 
 require("./models");
 
@@ -19,13 +26,20 @@ app.use(corsConfig);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("common"));
+app.use(helmet());
+app.use(cookieParser());
+``
 
-sequelize.sync({ force: false }).then(() => {
+/*sequelize.sync({ force: false }).then(() => {
     console.log("Database & tables created!");
 });
+*/
 
 // ROUTE
 app.use("/api/dict", dictRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api", grammarRoutes);
+app.use("/auth", rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }), authRoutes);
 
 
 const startServer = async () => {

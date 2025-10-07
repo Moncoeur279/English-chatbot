@@ -15,9 +15,9 @@ const sequelize = new Sequelize(
 const connectDB = async () => {
     try {
         await sequelize.authenticate();
-        console.log("✅ Kết nối SQL Server thành công!");
+        console.log("Kết nối SQL Server thành công!");
     } catch (err) {
-        console.error("❌ Lỗi kết nối:", err);
+        console.error("Lỗi kết nối:", err);
         process.exit(1);
     }
 };

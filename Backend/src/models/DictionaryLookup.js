@@ -15,13 +15,11 @@ const DictionaryLookup = sequelize.define(
             allowNull: false,
         },
 
-        // phiên âm (nếu có)
         phonetic: {
             type: DataTypes.STRING(64),
             allowNull: true,
         },
 
-        // ngôn ngữ, mặc định EN
         language: {
             type: DataTypes.STRING(8),
             allowNull: false,

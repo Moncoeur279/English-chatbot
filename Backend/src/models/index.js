@@ -4,6 +4,7 @@ const User = require("./User");
 const Conversation = require("./Conversation");
 const Message = require("./Message");
 const Correction = require("./Correction");
+const VerificationCode = require("../authModels/VerificationCode");
 
 // Associations
 User.hasMany(Conversation, {
@@ -43,4 +44,5 @@ module.exports = {
   Conversation,
   Message,
   Correction,
+  VerificationCode,
 };
