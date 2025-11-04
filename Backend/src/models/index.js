@@ -4,9 +4,22 @@ const User = require("./User");
 const Conversation = require("./Conversation");
 const Message = require("./Message");
 const Correction = require("./Correction");
+const DictionaryLookup = require("./DictionaryLookup"); // 👈 thêm dòng này
 const VerificationCode = require("../authModels/VerificationCode");
 
 // Associations
+User.hasMany(DictionaryLookup, {
+  foreignKey: "userId",
+  as: "dictionaryLookups",
+  onDelete: "CASCADE",
+});
+
+DictionaryLookup.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+});
+
+// (các phần còn lại giữ nguyên)
 User.hasMany(Conversation, {
   foreignKey: "userId",
   as: "conversations",
@@ -27,7 +40,6 @@ Message.belongsTo(Conversation, {
   as: "conversation",
 });
 
-// 1-1: Message <-> Correction
 Message.hasOne(Correction, {
   foreignKey: "messageId",
   as: "correction",
@@ -44,5 +56,6 @@ module.exports = {
   Conversation,
   Message,
   Correction,
+  DictionaryLookup, // 👈 thêm vào export
   VerificationCode,
 };

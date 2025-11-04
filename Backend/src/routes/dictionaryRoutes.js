@@ -1,9 +1,11 @@
-const { Router } = require('express');
-const { lookup, recent } = require('../controllers/dictionaryController');
+// Backend/src/routes/dictionaryRoutes.js
+const express = require("express");
+const router = express.Router();
 
-const router = Router();
+const { lookup, recent } = require("../controllers/dictionaryController");
+const auth = require("../middleware/auth");
 
-router.get('/lookup', lookup);
-router.get('/recent', recent);
+router.get("/dict/lookup", auth, lookup);
+router.get("/dict/recent", auth, recent);
 
-module.exports = router; 
+module.exports = router;

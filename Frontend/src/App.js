@@ -4,7 +4,7 @@ import "./App.css";
 import { ChatHeader } from "./components/ChatHeader";
 import Sidebar from "./components/Sidebar";
 import ChatMain from "./components/ChatMain";
-import { ProfilePage } from "./components/ProfilePage";
+import ProfilePage from "./components/ProfilePage";
 import { DictionaryPage } from "./components/DictionaryModal";
 
 export default function App() {

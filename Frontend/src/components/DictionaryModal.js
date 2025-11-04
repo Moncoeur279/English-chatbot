@@ -1,15 +1,15 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { HiSpeakerWave } from 'react-icons/hi2';
-import { FaBook } from 'react-icons/fa';
-import { FaSearch } from 'react-icons/fa';
+import { HiSpeakerWave } from "react-icons/hi2";
+import { FaBook } from "react-icons/fa";
+import { FaSearch } from "react-icons/fa";
 import "../styles/DictionaryModal.css";
 
 function pickBestAudio(phonetics = []) {
-  const hasAudio = phonetics.filter(p => p.audio);
+  const hasAudio = phonetics.filter((p) => p.audio);
   if (!hasAudio.length) return null;
-  const us = hasAudio.find(p => /us/i.test(p.audio));
-  const uk = hasAudio.find(p => /uk/i.test(p.audio));
+  const us = hasAudio.find((p) => /us/i.test(p.audio));
+  const uk = hasAudio.find((p) => /uk/i.test(p.audio));
   return (us || uk || hasAudio[0]).audio;
 }
 
@@ -32,11 +32,25 @@ export function DictionaryPage() {
     setIsPlaying(false);
 
     try {
-      const res = await fetch(`http://localhost:3030/api/dict/lookup?word=${encodeURIComponent(q)}`);
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(
+        `http://localhost:3030/api/dict/lookup?word=${encodeURIComponent(q)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
       if (!res.ok) throw new Error(`Lookup failed: ${res.status}`);
       const data = await res.json();
 
-      const senses = Array.isArray(data.senses) ? data.senses : [];
+      const senses = Array.isArray(data.meanings)
+        ? data.meanings.flatMap((m) =>
+            m.definitions.map((d) => ({
+              pos: m.partOfSpeech,
+              definition: d.definition,
+              example: d.example || "",
+            }))
+          )
+        : [];
+
       const first = senses[0] || {};
 
       setResult({
@@ -81,19 +95,24 @@ export function DictionaryPage() {
     try {
       const u = new SpeechSynthesisUtterance(result.word);
       const voices = window.speechSynthesis.getVoices();
-      const en = voices.find(v => /en(-|_)?(US|GB|UK)?/i.test(v.lang));
+      const en = voices.find((v) => /en(-|_)?(US|GB|UK)?/i.test(v.lang));
       if (en) u.voice = en;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
-    } catch { }
+    } catch {}
   };
 
   return (
     <div className="dictionary-modal-overlay" role="dialog" aria-modal="true">
       <div className="dictionary-modal">
         <div className="modal-header">
-          <h3> < FaBook color="#3b82f6" /> DICTIONARY </h3>
-          <button className="close-button" onClick={() => navigate(-1)}>✕</button>
+          <h3>
+            {" "}
+            <FaBook color="#3b82f6" /> DICTIONARY{" "}
+          </h3>
+          <button className="close-button" onClick={() => navigate(-1)}>
+            ✕
+          </button>
         </div>
 
         <div className="modal-body">
@@ -104,10 +123,16 @@ export function DictionaryPage() {
               placeholder="Look up a word..."
               value={word}
               onChange={(e) => setWord(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleLookup(); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleLookup();
+              }}
             />
-            <button className="search-btn" onClick={handleLookup} disabled={loading}>
-              {loading ? "…" : < FaSearch size={20} />}
+            <button
+              className="search-btn"
+              onClick={handleLookup}
+              disabled={loading}
+            >
+              {loading ? "…" : <FaSearch size={20} />}
             </button>
           </div>
 
@@ -124,7 +149,7 @@ export function DictionaryPage() {
                   onClick={playAudio}
                   title="Play pronunciation"
                 >
-                  {isPlaying ? "⏹" : < HiSpeakerWave size={15} />}
+                  {isPlaying ? "⏹" : <HiSpeakerWave size={15} />}
                 </button>
                 {result.pos && <div className="pos">{result.pos}</div>}
               </div>

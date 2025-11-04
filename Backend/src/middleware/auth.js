@@ -7,6 +7,7 @@ module.exports = function auth(req, res, next) {
   if (!token) return res.status(401).json({ message: "Unauthorized" });
   try {
     const payload = verifyAccess(token);
+
     req.user = { id: payload.sub, email: payload.email };
     next();
   } catch {

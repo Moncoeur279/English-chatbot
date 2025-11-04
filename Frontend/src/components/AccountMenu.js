@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaUser } from 'react-icons/fa';
-import { FaPlus } from 'react-icons/fa';
-import { BiLogOut } from 'react-icons/bi';
+import { FaUser, FaPlus } from "react-icons/fa";
+import { BiLogOut } from "react-icons/bi";
 import "../styles/AccountMenu.css";
 
 export function AccountMenu() {
@@ -11,7 +10,6 @@ export function AccountMenu() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("User");
   const [userEmail, setUserEmail] = useState("");
-
 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -26,15 +24,40 @@ export function AccountMenu() {
   });
   const [verifyForm, setVerifyForm] = useState({ email: "", code: "" });
 
+  // 🔹 Khi component mount, đọc dữ liệu từ LocalStorage để duy trì đăng nhập
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    const storedName = localStorage.getItem("userName");
+    const storedEmail = localStorage.getItem("userEmail");
+
+    if (token) {
+      setIsLoggedIn(true);
+      if (storedName) setUserName(storedName);
+      if (storedEmail) setUserEmail(storedEmail);
+    }
+  }, []);
+
   // ===== LOGIN =====
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`http://localhost:3030/auth/login`, loginForm);
-      const { user, accessToken } = res.data;
+      const res = await axios.post(
+        `http://localhost:3030/auth/login`,
+        loginForm
+      );
+      console.log("🟢 Response data:", res.data);
 
+      const { user, accessToken } = res.data;
+      if (!accessToken) {
+        alert("Login failed: no token returned");
+        return;
+      }
+
+      // ✅ Lưu thông tin vào LocalStorage
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("userId", user.id);
+      localStorage.setItem("userName", user.name);
+      localStorage.setItem("userEmail", user.email);
 
       setIsLoggedIn(true);
       setUserName(user.name || user.email.split("@")[0]);
@@ -42,6 +65,7 @@ export function AccountMenu() {
       setLoginForm({ email: "", password: "" });
       setShowLoginModal(false);
     } catch (err) {
+      console.error(err);
       alert(err.response?.data?.message || "Login failed");
     }
   };
@@ -50,7 +74,10 @@ export function AccountMenu() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`http://localhost:3030/auth/register`, registerForm);
+      const res = await axios.post(
+        `http://localhost:3030/auth/register`,
+        registerForm
+      );
       alert(res.data.message);
 
       setVerifyForm({ email: registerForm.email, code: "" });
@@ -66,11 +93,16 @@ export function AccountMenu() {
   const handleVerify = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`http://localhost:3030/auth/verify-email`, verifyForm);
+      const res = await axios.post(
+        `http://localhost:3030/auth/verify-email`,
+        verifyForm
+      );
       const { user, accessToken } = res.data;
 
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("userId", user.id);
+      localStorage.setItem("userName", user.name);
+      localStorage.setItem("userEmail", user.email);
 
       setIsLoggedIn(true);
       setUserName(user.name || user.email.split("@")[0]);
@@ -84,6 +116,9 @@ export function AccountMenu() {
   // ===== LOGOUT =====
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
     setIsLoggedIn(false);
     setUserName("User");
     setShowUserMenu(false);
@@ -97,20 +132,19 @@ export function AccountMenu() {
             className="auth-button login-btn"
             onClick={() => setShowLoginModal(true)}
           >
-            < FaUser /> Login
+            <FaUser /> Login
           </button>
           <button
             className="auth-button register-btn"
             onClick={() => setShowRegisterModal(true)}
           >
-            < FaPlus /> Register
+            <FaPlus /> Register
           </button>
         </div>
 
+        {/* ===== Login Modal ===== */}
         {showLoginModal && (
-          <div
-            className="modal-overlay"
-          >
+          <div className="modal-overlay">
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Login to your account</h3>
@@ -152,10 +186,9 @@ export function AccountMenu() {
           </div>
         )}
 
+        {/* ===== Register Modal ===== */}
         {showRegisterModal && (
-          <div
-            className="modal-overlay"
-          >
+          <div className="modal-overlay">
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Create an account</h3>
@@ -214,10 +247,9 @@ export function AccountMenu() {
           </div>
         )}
 
+        {/* ===== Verify Modal ===== */}
         {showVerifyModal && (
-          <div
-            className="modal-overlay"
-          >
+          <div className="modal-overlay">
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Verify your email</h3>
@@ -255,7 +287,7 @@ export function AccountMenu() {
     );
   }
 
-  // Nếu đã đăng nhập
+  // 🔹 Nếu đã đăng nhập
   return (
     <div className="user-menu-container">
       <button
@@ -278,11 +310,11 @@ export function AccountMenu() {
               navigate("/profile");
             }}
           >
-            < FaUser /> Profile
+            <FaUser /> Profile
           </button>
           <div className="dropdown-divider"></div>
           <button className="dropdown-item logout-item" onClick={handleLogout}>
-            < BiLogOut size={20} color="#ff0000" /> Log out
+            <BiLogOut size={20} color="#ff0000" /> Log out
           </button>
         </div>
       )}

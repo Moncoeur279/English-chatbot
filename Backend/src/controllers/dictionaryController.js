@@ -1,46 +1,65 @@
-const { lookupWord } = require("../services/dictionaryService");
+// Backend/src/controllers/dictionaryController.js
+const { DictionaryLookup } = require("../models");
+const fetch = require("node-fetch");
 
-const lookup = async (req, res) => {
+exports.lookup = async (req, res) => {
+  try {
+    const userId = req.user?.id; // ✅ lấy từ token
     const word = (req.query.word || "").trim();
-    if (!word) return res.status(400).json({ error: "Missing 'word' query param" });
+    if (!word)
+      return res.status(400).json({ error: "Missing 'word' query param" });
 
-    const data = await lookupWord(word);
-    if (!data) return res.status(404).json({ error: "Not found" });
+    // 🔍 Gọi API Dictionary
+    const apiUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
+      word
+    )}`;
+    const response = await fetch(apiUrl);
+    if (!response.ok) return res.status(404).json({ error: "Word not found" });
 
-    if (req.db?.DictionaryLookup) {
-        try {
-            await req.db.DictionaryLookup.create({
-                word: data.word,
-                phonetic: data.phonetic || null,
-                resultJson: data,
-            });
-        } catch (e) {
-            console.warn("[dict] save history failed:", e.message);
-        }
+    const data = await response.json();
+    const entry = data[0] || {};
+
+    // ✅ Lưu lịch sử vào DB
+    if (userId) {
+      await DictionaryLookup.create({
+        userId,
+        word: entry.word || word,
+        phonetic: entry.phonetic || "",
+        language: "en",
+        source: "dictionaryapi.dev",
+        resultJson: entry,
+      });
     }
 
-    res.json(data);
+    res.json(entry);
+  } catch (e) {
+    console.error("[dict] lookup error:", e);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
-const recent = async (req, res) => {
-    const days = Number(req.query.days || 7);
-    if (!req.db?.DictionaryLookup) return res.json([]);
+// 🕓 API lấy danh sách tra gần đây
+exports.recent = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
-    const since = new Date(Date.now() - days * 24 * 3600 * 1000);
-    const rows = await req.db.DictionaryLookup.findAll({
-        where: { createdAt: { [req.db.Sequelize.Op.gte]: since } },
-        order: [["createdAt", "DESC"]],
-        limit: 50,
+    const history = await DictionaryLookup.findAll({
+      where: { userId },
+      order: [["createdAt", "DESC"]],
+      limit: 10,
     });
 
     res.json(
-        rows.map((r) => ({
-            id: r.id,
-            word: r.word,
-            phonetic: r.phonetic,
-            at: r.createdAt,
-        }))
+      history.map((r) => ({
+        id: r.id,
+        word: r.word,
+        phonetic: r.phonetic,
+        at: r.createdAt,
+      }))
     );
+  } catch (err) {
+    console.error("[dict] recent error:", err);
+    res.status(500).json({ error: "Failed to fetch history" });
+  }
 };
-
-module.exports = { lookup, recent };

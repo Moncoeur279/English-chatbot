@@ -62,7 +62,7 @@ exports.verifyEmail = async (req, res) => {
     });
   }
   await rec.update({ consumed: true });
-
+  console.log("🔑 Signing JWT with secret:", process.env.JWT_ACCESS_SECRET);
   const at = signAccess({ sub: user.id, email: user.email });
   return res.json({ user, accessToken: at });
 };
@@ -76,5 +76,7 @@ exports.login = async (req, res) => {
   if (!ok) return res.status(401).json({ message: "Invalid credentials" });
 
   const at = signAccess({ sub: user.id, email: user.email });
+  console.log("User found:", user);
+  console.log("Token:", at);
   return res.json({ user, accessToken: at });
 };
